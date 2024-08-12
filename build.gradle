@@ -1,30 +1,59 @@
 buildscript { 
-  apply from: 'buildscript.gradle'
+	repositories {
+		mavenCentral()
+		maven {
+			url "https://repo.comm-unity.at/nexus/content/groups/public"
+			content { includeGroupByRegex "at\\.comm_unity.*" }
+		}
+	}
+	dependencies {
+		classpath 'at.comm_unity.gradle:publishing-plugin:1.1.0'
+	}
 }
 
-group = 'com.github.jacobono'
+println "Running Gradle ${gradle.gradleVersion} for ${project.name} with Java " + System.getProperty("java.version") + " (" + System.getProperty("java.home") + ")" 
+
+group = 'at.comm_unity.com.github.jacobono'
 version = '1.1.2'
 
-apply from: 'publishing.gradle'
 apply plugin: 'groovy'
-apply from: 'cobertura.gradle'
-apply from: 'integTest.gradle'
+apply plugin: 'maven-publish'
+//apply plugin: 'at.comm_unity.maven-publish-conventions'
 
-sourceCompatibility = 1.6
-targetCompatibility = 1.6
+java {
+    toolchain {
+		languageVersion = JavaLanguageVersion.of(8)
+    }
+	withSourcesJar()
+}	
 
 repositories { 
   mavenCentral()
 }
 
+sourceSets {
+  integTest {
+    compileClasspath += main.output + test.output
+    runtimeClasspath += main.output + test.output
+  }
+}
+
+configurations {
+  integTestCompile.extendsFrom testCompile
+  integTestRuntime.extendsFrom testRuntime
+}
+
 dependencies {
-  compile 'org.codehaus.groovy:groovy-all:2.2.1'
-  compile 'org.slf4j:slf4j-api:1.7.6'
-  compile 'com.google.inject:guice:3.0'
-  compile 'com.google.inject.extensions:guice-assistedinject:3.0'
-  testCompile "org.spockframework:spock-core:0.7-groovy-2.0"
-  testCompile 'cglib:cglib-nodep:2.2'
-  testCompile 'org.objenesis:objenesis:1.2'
+  implementation 'org.codehaus.groovy:groovy-all:2.2.1'
+  implementation 'org.slf4j:slf4j-api:1.7.6'
+  implementation 'com.google.inject:guice:3.0'
+  implementation 'com.google.inject.extensions:guice-assistedinject:3.0'
+  
+  testImplementation "org.spockframework:spock-core:0.7-groovy-2.0"
+  testImplementation 'cglib:cglib-nodep:2.2'
+  testImplementation 'org.objenesis:objenesis:1.2'
+
+  integTestCompile 'org.spockframework:spock-guice:0.7-groovy-2.0'
 }
 
 groovydoc {
@@ -35,13 +64,8 @@ groovydoc {
 }
 
 task groovyDocJar(type: Jar, dependsOn: groovydoc) {
-  classifier = 'groovydoc'
+  archiveClassifier = 'groovydoc'
   from groovydoc.destinationDir
-}
-
-task groovySourceJar(type: Jar, dependsOn: 'jar') {
-  classifier = 'sources'
-  from sourceSets.main.allSource
 }
 
 test {
@@ -54,6 +78,41 @@ artifacts {
   archives jar, groovyDocJar
 }
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '1.11'
+// cuRepository* definiert in $HOME/.gradle/gradle.properties
+def repositoryUsernamePropName = 'cuRepositoryUser'
+def repositoryPasswordPropName = 'cuRepositoryPassword'
+
+publishing {
+	repositories {
+		maven {
+			url "https://repo.comm-unity.at/nexus/content/repositories/${project.version.endsWith('-SNAPSHOT') ? 'snapshots' : 'releases'}"
+
+			credentials {
+				username project.hasProperty(repositoryUsernamePropName) ? project.getProperty(repositoryUsernamePropName) : ''
+				password project.hasProperty(repositoryPasswordPropName) ? project.getProperty(repositoryPasswordPropName) : ''
+			}
+		}
+	}
+
+  publications {
+    plugin(MavenPublication) {
+      from components.java
+      
+      artifact groovyDocJar
+    }
+  }
+}
+
+task integTest(type: Test) {
+  dependsOn(test)
+  testClassesDirs = sourceSets.integTest.output.classesDirs
+  classpath = sourceSets.integTest.runtimeClasspath
+  reports.html.outputLocation = file("${project.testReportDir}/integTests")
+  testLogging {
+    events "passed", "skipped", "failed"
+  }
+}
+
+wrapper {
+    gradleVersion = '8.6'
 }
