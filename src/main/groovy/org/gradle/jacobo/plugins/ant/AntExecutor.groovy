@@ -1,6 +1,6 @@
 package org.gradle.jacobo.plugins.ant
 
-import groovy.util.AntBuilder
+import groovy.ant.AntBuilder
 
 /**
  *  Abstracts ant tasks defined in plugin, so that unit and integration
