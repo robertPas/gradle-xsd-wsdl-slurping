@@ -43,7 +43,7 @@ configurations {
 }
 
 dependencies {
-  implementation 'org.codehaus.groovy:groovy-all:3.0.21'
+  implementation localGroovy() //'org.codehaus.groovy:groovy-all:3.0.21'
   implementation 'org.slf4j:slf4j-api:1.7.6'
   implementation 'com.google.inject:guice:3.0'
   implementation 'com.google.inject.extensions:guice-assistedinject:3.0'
