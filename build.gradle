@@ -107,7 +107,7 @@ task integTest(type: Test) {
   dependsOn(test)
   testClassesDirs = sourceSets.integTest.output.classesDirs
   classpath = sourceSets.integTest.runtimeClasspath
-  reports.html.outputLocation = file("${project.testReportDir}/integTests")
+  reports.html.outputLocation = file("${java.testReportDir}/integTests")
   testLogging {
     events "passed", "skipped", "failed"
   }
