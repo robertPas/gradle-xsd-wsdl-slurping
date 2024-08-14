@@ -38,8 +38,8 @@ sourceSets {
 }
 
 configurations {
-  integTestCompile.extendsFrom testCompile
-  integTestRuntime.extendsFrom testRuntime
+	integTestImplementation.extendsFrom testImplementation
+	integTestRuntimeOnly.extendsFrom testRuntimeOnly
 }
 
 dependencies {
@@ -55,7 +55,9 @@ dependencies {
   testImplementation 'cglib:cglib-nodep:2.2'
   testImplementation 'org.objenesis:objenesis:1.2'
 
-//  integTestCompile 'org.spockframework:spock-guice:0.7-groovy-2.0'
+	integTestImplementation ("org.spockframework:spock-guice") {
+		exclude group: "org.codehaus.groovy", module: "groovy"
+	}
 }
 
 groovydoc {
@@ -78,7 +80,8 @@ test {
 }
 
 artifacts {
-  archives jar, groovyDocJar
+	// to also generate the groovyDocJar at assemble
+	archives jar, groovyDocJar
 }
 
 // cuRepository* definiert in $HOME/.gradle/gradle.properties
@@ -108,9 +111,10 @@ publishing {
 
 task integTest(type: Test) {
   dependsOn(test)
+	useJUnitPlatform()
   testClassesDirs = sourceSets.integTest.output.classesDirs
   classpath = sourceSets.integTest.runtimeClasspath
-  reports.html.outputLocation = file("${java.testReportDir}/integTests")
+  reports.html.outputLocation = java.testReportDir.dir("integTests")
   testLogging {
     events "passed", "skipped", "failed"
   }
