@@ -72,16 +72,27 @@ task groovyDocJar(type: Jar, dependsOn: groovydoc) {
   from groovydoc.destinationDir
 }
 
-test {
-	useJUnitPlatform()
-	testLogging {
-		events "passed", "skipped", "failed"
-	}
-}
-
 artifacts {
 	// to also generate the groovyDocJar at assemble
 	archives jar, groovyDocJar
+}
+
+task integTest(type: Test) {
+  dependsOn(test)
+  testClassesDirs = sourceSets.integTest.output.classesDirs
+  classpath = sourceSets.integTest.runtimeClasspath
+  reports.html.outputLocation = java.testReportDir.dir("integTests")
+}
+
+tasks.named('check') {
+	dependsOn(integTest)
+}
+
+tasks.withType(Test).configureEach {
+	useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
 }
 
 // cuRepository* definiert in $HOME/.gradle/gradle.properties
@@ -106,17 +117,6 @@ publishing {
       
       artifact groovyDocJar
     }
-  }
-}
-
-task integTest(type: Test) {
-  dependsOn(test)
-	useJUnitPlatform()
-  testClassesDirs = sourceSets.integTest.output.classesDirs
-  classpath = sourceSets.integTest.runtimeClasspath
-  reports.html.outputLocation = java.testReportDir.dir("integTests")
-  testLogging {
-    events "passed", "skipped", "failed"
   }
 }
 
