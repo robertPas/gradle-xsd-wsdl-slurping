@@ -11,13 +11,15 @@ buildscript {
 	}
 }
 
+plugins {
+	id 'eclipse'
+	id 'groovy'
+}
+apply plugin: 'at.comm_unity.maven-publish-conventions'
+
 println "Running Gradle ${gradle.gradleVersion} for ${project.name} with Java " + System.getProperty("java.version") + " (" + System.getProperty("java.home") + ")" 
 
 group = 'at.comm_unity.com.github.jacobono'
-
-apply plugin: 'groovy'
-apply plugin: 'maven-publish'
-//apply plugin: 'at.comm_unity.maven-publish-conventions'
 
 java {
     toolchain {
@@ -95,29 +97,12 @@ tasks.withType(Test).configureEach {
     }
 }
 
-// cuRepository* definiert in $HOME/.gradle/gradle.properties
-def repositoryUsernamePropName = 'cuRepositoryUser'
-def repositoryPasswordPropName = 'cuRepositoryPassword'
-
 publishing {
-	repositories {
-		maven {
-			url "https://repo.comm-unity.at/nexus/content/repositories/${project.version.endsWith('-SNAPSHOT') ? 'snapshots' : 'releases'}"
-
-			credentials {
-				username project.hasProperty(repositoryUsernamePropName) ? project.getProperty(repositoryUsernamePropName) : ''
-				password project.hasProperty(repositoryPasswordPropName) ? project.getProperty(repositoryPasswordPropName) : ''
-			}
+	publications {
+		mavenJava(MavenPublication) {
+			artifact groovyDocJar
 		}
 	}
-
-  publications {
-    plugin(MavenPublication) {
-      from components.java
-      
-      artifact groovyDocJar
-    }
-  }
 }
 
 wrapper {
